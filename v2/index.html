@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UX Skills Framework</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      font-optical-sizing: auto;
+      background-color: #FFFFF4;
+      padding: 0;
+      margin:0;
+    }
+
+    h1 {
+      font-weight: 300;
+      font-family: "Cormorant Garamond", serif;
+      font-style: italic;
+      font-size: 4rem;
+      margin: 1rem 0 1rem 1rem;
+    }
+
+    h2 {
+      height: 4.5rem;
+      font-weight:400;
+      margin-bottom: 0;
+      font-size: 1rem;
+      text-align: center;
+      user-select: none;
+    }    
+
+    .layout {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .left-column {
+      flex: 0 0 60%;
+      padding: 1rem 0.5rem;
+      overflow-y: auto;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+
+    .right-column {
+       flex: 0 0 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      overflow: hidden;
+      position: relative;
+    }
+        
+    .tab-buttons {
+      margin: 1rem 0;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-buttons button {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      background: #eee;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .tab-buttons button.active {
+      background: #ccc;
+    }
+    
+    /* Make radar chart fit in container */
+    #chart-wrapper {
+      width: 90%;
+      height: 90%;
+      max-width: 500px;
+      max-height: 500px;
+    }
+
+    #radarChart {
+      width: 100%;
+      height: 100%;
+      opacity: 1;
+    }
+
+    /* Responsive: stack vertically on smaller screens */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .left-column, .right-column {
+        max-width: 100%;
+        height: auto;
+      }
+
+      #chart-wrapper {
+        max-width: 90vw;
+        max-height: 90vw;
+      }
+    }
+
+    #skills-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
+      gap: 2rem;
+      /* width: 100%; */
+      box-sizing: border-box;
+      padding: 1rem;
+    }
+
+    .category-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 120px;
+    }
+
+
+    
+    .skill-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+
+    .skill {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid grey;
+      background: #FFFFEF;
+    }
+
+    .skill-label {
+      height: 1.75rem;
+      margin: 0.2rem 0 0 0.1rem;
+      text-align: center;
+      font-size: 0.7rem;
+      /* transform: translateX(25px); */
+    }
+
+    .inner-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      border: 1px solid grey;
+    }
+  
+    /* First ring: smaller center circle */
+    .ring-1 {
+      width: 30%;
+      height: 30%;
+      background-color: transparent;
+      border-style: dashed;
+    }
+
+    /* Second ring: medium inner circle */
+    .ring-2 {
+      width: 70%;
+      height: 70%;
+      background-color: transparent;
+      border-style: dashed;
+    }
+
+    /* Level 1: fill ring-1 */
+    .level-1 .ring-1,
+    .level-2 .ring-1,
+    .level-3 .ring-1 {
+      background-color: rgba(100, 150, 250);
+      border-color: white;
+    }
+
+    .level-2 .ring-2,
+    .level-3 .ring-2 {
+      background-color: rgba(100, 150, 250, 0.9);
+      border-color: white;
+    }
+
+    .level-2 .ring-2 {
+      border-style: dashed;
+    }
+
+    .level-3.skill {
+      background-color: rgba(100, 150, 250, 0.9);
+      border-color: white;
+      border-style:solid;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="left-column">
+      <h1>UX Skills Framework</h1>
+      <div id="import-tabs" class="tab-buttons"></div>
+
+      <div id="skills-container"></div>
+      <button id="export-button">Save My Chart</button>
+      <textarea id="export-output" readonly rows="10" style="width: 100%; margin-top: 1rem;"></textarea>
+      <button id="import-button">Import Chart</button>
+
+      <div id="import-area" style="display: none; margin-top: 1rem;">
+        <textarea id="import-input" rows="10" style="width: 100%;"></textarea>
+        <button id="import-submit">Apply Import</button>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div id="chart-wrapper">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    import { fetchData, groupSkills } from './skills.js';
+    import { renderSkills } from './skills.js';
+    import { initRadarChart, exportSkillData, setSkillLevelsFromData, overlayRadarDataset} from './radarChart.js';
+
+    const url = 'https://script.google.com/macros/s/AKfycbwGH0pgjeLSBaFCOoL6wZiCH4Btwvm2zi7H3KcmZfwacQ0GiM0_iUOX2s3-dETDY9U7/exec';
+
+    const res = await fetch(url);
+    const rawData = await res.json();
+
+    const grouped = groupSkills(rawData);
+    const categories = Object.keys(grouped);
+
+    initRadarChart(categories);
+    renderSkills(grouped);
+
+    document.getElementById('export-button').addEventListener('click', () => {
+      const data = exportSkillData();
+      const output = document.getElementById('export-output');
+      output.value = JSON.stringify(data, null, 2);
+    });
+
+    // ============ IMPORT LOGIC ============
+
+    document.getElementById('import-button').addEventListener('click', () => {
+      document.getElementById('import-area').style.display = 'block';
+    });
+
+    let importCount = 1;
+
+    document.getElementById('import-submit').addEventListener('click', () => {
+      const jsonText = document.getElementById('import-input').value.trim();
+      if (!jsonText) return;
+
+      try {
+        const parsed = JSON.parse(jsonText);
+
+        // Update the circles to match latest imported one
+        setSkillLevelsFromData(parsed);
+
+        // Add as a new dataset to radar
+        overlayRadarDataset(parsed, `Import ${importCount}`);
+        importCount++;
+
+        document.getElementById('import-area').style.display = 'none';
+      } catch (err) {
+        alert('Invalid JSON input: ' + err.message);
+      }
+    })
+
+  </script>
+</body>
+</html>

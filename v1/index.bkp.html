@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Skills Framework</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      font-optical-sizing: auto;
+      margin: 0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #FFFFF4;
+    }
+
+    h1, h2 {
+      font-weight:600;
+    }
+
+    #radarChart {
+      max-width: 450px;
+      max-height: 450px;
+      margin-top: 2rem;
+    }
+
+
+    #skills-container {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+
+    .category-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+       max-width: 120px;
+    }
+
+    .category-column h2 {
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      text-align: center;
+      user-select: none;
+    }    
+    
+    .skill-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    /* .skill-label {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      text-align: center;
+      pointer-events: none;
+    } */
+
+    .skill {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid grey;
+      /* margin-bottom: 3.5rem; */
+      background: #FFFFEF;
+    }
+
+
+    .skill-label {
+      height: 3rem;
+      margin: 0.5rem 0 0 0.1rem;
+      text-align: left;
+      font-size: 1rem;
+      /* user-select: none; */
+    }
+
+
+    .inner-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      border: 1px solid grey;
+    }
+  
+    /* First ring: smaller center circle */
+    .ring-1 {
+      width: 30%;
+      height: 30%;
+      background-color: transparent;
+      border-style: dashed;
+    }
+
+    /* Second ring: medium inner circle */
+    .ring-2 {
+      width: 70%;
+      height: 70%;
+      background-color: transparent;
+      border-style: dashed;
+    }
+
+    /* Level 1: fill ring-1 */
+    .level-1 .ring-1,
+    .level-2 .ring-1,
+    .level-3 .ring-1 {
+      background-color: rgba(100, 150, 250);
+      border-color: white;
+    }
+
+    .level-2 .ring-2,
+    .level-3 .ring-2 {
+      background-color: rgba(100, 150, 250, 0.9);
+      border-color: white;
+    }
+
+    .level-2 .ring-2 {
+      border-style: dashed;
+    }
+
+    .level-3.skill {
+      background-color: rgba(100, 150, 250, 0.9);
+      border-color: white;
+      border-style:solid;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Skills Framework</h1>
+
+  <div id="skills-container"></div>
+  <div id="skills-output"></div>
+  <canvas id="radarChart" width="450" height="450"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    import { groupSkills, renderSkills } from './skills.js';    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGH0pgjeLSBaFCOoL6wZiCH4Btwvm2zi7H3KcmZfwacQ0GiM0_iUOX2s3-dETDY9U7/exec';
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGH0pgjeLSBaFCOoL6wZiCH4Btwvm2zi7H3KcmZfwacQ0GiM0_iUOX2s3-dETDY9U7/exec';
+
+    async function init() {
+      const res = await fetch(GOOGLE_SHEET_URL);
+      const rawData = await res.json();
+
+      const grouped = groupSkills(rawData);
+      renderSkills(grouped);
+    }
+
+    init();
+  </script>
+  
+  <script>
+    // const skillData = {
+    //   "Design": [
+    //     { id: "interaction", title: "Interaction Design" },
+    //     { id: "visual", title: "Visual Design" }
+    //   ],
+    //   "Research": [
+    //     { id: "usability", title: "Usability Testing" },
+    //     { id: "fieldwork", title: "Field Research" }
+    //   ],
+    //   "Craft": [
+    //     { id: "origami", title: "Origami" },
+    //     { id: "woodwork", title: "Woodwork" }
+    //   ],
+    //   "Thinking": [
+    //     { id: "chin-stroking", title: "Chin stroking" },
+    //     { id: "talking", title: "Talking" }
+    //   ],
+    //   "Communication": [
+    //     { id: "presentations", title: "Presenting" },
+    //     { id: "arguing", title: "Arguing" }
+    //   ]
+    // };
+
+    // const skillStates = {};
+
+    // for (const [category, skills] of Object.entries(skillData)) {
+    //   for (const skill of skills) {
+    //     skillStates[skill.id] = { level: 0, category };
+    //   }
+    // }
+
+    // const skillsContainer = document.getElementById('skills-container');
+
+    // for (const [category, skills] of Object.entries(skillData)) {
+    //   // Create category column
+    //   const column = document.createElement('div');
+    //   column.className = 'category-column';
+
+    //   // Add category label
+    //   const heading = document.createElement('h2');
+    //   heading.textContent = category;
+    //   column.appendChild(heading);
+
+    //   for (const skill of skills) {
+    //     // Create a wrapper for the skill and label
+    //     const skillWrapper = document.createElement('div');
+    //     skillWrapper.className = 'skill-wrapper';
+
+    //     // Create skill circle (clickable)
+    //     const skillEl = document.createElement('div');
+    //     skillEl.id = skill.id;
+    //     skillEl.className = 'skill level-0';
+    //     skillEl.setAttribute('onclick', 'cycleSkillLevel(this)');
+
+    //     const ring2 = document.createElement('div');
+    //     ring2.className = 'inner-ring ring-2';
+    //     skillEl.appendChild(ring2);
+
+    //     const ring1 = document.createElement('div');
+    //     ring1.className = 'inner-ring ring-1';
+    //     skillEl.appendChild(ring1);
+
+    //     // Create label (non-clickable)
+    //     const label = document.createElement('div');
+    //     label.className = 'skill-label';
+    //     label.textContent = skill.title;
+
+    //     // Append skill and label to wrapper
+    //     skillWrapper.appendChild(skillEl);
+    //     skillWrapper.appendChild(label);
+
+    //     // Append to column
+    //     column.appendChild(skillWrapper);
+    //   }
+
+    //   // Add column to container
+    //   skillsContainer.appendChild(column);
+    // }
+
+
+    function cycleSkillLevel(skillEl) {
+      const id = skillEl.id;
+      const currentClass = [...skillEl.classList].find(cls => cls.startsWith('level-'));
+      let level = 0;
+
+      if (currentClass) {
+        level = parseInt(currentClass.split('-')[1], 10);
+        skillEl.classList.remove(currentClass);
+      }
+
+      const nextLevel = (level + 1) % 4;
+      skillEl.classList.add(`level-${nextLevel}`);
+
+      if (skillStates[id]) {
+        skillStates[id].level = nextLevel;
+      }
+
+      updateRadarChart();
+    }
+
+    function updateRadarChart() {
+      const categoryScores = {};
+
+      // Group levels by category
+      for (const [id, { level, category }] of Object.entries(skillStates)) {
+        if (!categoryScores[category]) categoryScores[category] = [];
+        categoryScores[category].push(level);
+      }
+
+      // Calculate average for each category
+      const scores = Object.keys(skillData).map(cat => {
+        const levels = categoryScores[cat] || [];
+        const total = levels.reduce((sum, l) => sum + l, 0);
+        return levels.length ? total / levels.length : 0;
+      });
+
+      radarChart.data.datasets[0].data = scores;
+      radarChart.update();
+    }
+
+    // Initial chart setup
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    
+    // Chart.defaults.font.family = "Inter";
+    // Chart.defaults.font.size = "";
+
+    const radarChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: Object.keys(skillData), // category names
+        datasets: [{
+          label: 'Skill Level by Category',
+          data: [], // will be filled in below
+          backgroundColor: 'rgba(100, 150, 250, 0.2)',
+          borderColor: 'rgba(100, 150, 250, 1)',
+          pointBackgroundColor: 'rgba(100, 150, 250, 1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        font: {
+          size: 50
+        },
+        scales: {
+          r: {
+            suggestedMin: 0,
+            suggestedMax: 2,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
