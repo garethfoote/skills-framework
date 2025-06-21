@@ -2,12 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
   <title>UX Skills Framework</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <style>
+
+    @font-face {
+      font-family: 'ET Bembo';
+      src: url('fonts/ETBembo-DisplayItalic.otf') format('opentype');
+      font-weight: normal;
+      font-style: italic;
+    }
+
+    @font-face {
+      font-family: 'ET Bembo';
+      src: url('fonts/ETBembo-RomanLF.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'ET Bembo';
+      src: url('fonts/ETBembo-SemiBoldOSF.otf') format('opentype');
+      font-weight: 500;
+      font-style: normal;
+    }
+
     body {
        --circle-color: rgba(100, 150, 250, 0.9);
        --background-color: #FFFFF4;
@@ -23,7 +46,7 @@
     h1 {
       font-weight: 300;
       font-family: "Cormorant Garamond", serif;
-      font-style: italic;
+      /* font-style: italic; */
       font-size: 4rem;
       margin: 1rem 0 1rem 1rem;
     }
@@ -98,7 +121,7 @@
     }
 
     /* Responsive: stack vertically on smaller screens */
-    @media (max-width: 768px) {
+    @media screen and (max-width: 768px) {
       .layout {
         flex-direction: column;
       }
