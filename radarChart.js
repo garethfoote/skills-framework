@@ -1,6 +1,8 @@
 // radarChart.js
 let radarChart;
 const skillStates = {};  // skillId: { level: 0, category: 'Design' }
+let editMode = true; // default on
+
 // const overlayColors = ['hsla(210, 80%, 50%, 0.8)', 'hsla(300, 80%, 50%, 0.8)', 'hsla(120, 80%, 50%, 0.8)'];
 export const overlayColors = [
   'rgba(100, 150, 250, 0.9)',
@@ -10,6 +12,10 @@ export const overlayColors = [
   'hsla(0,   80%, 60%, 0.9)'
 ];
 let overlayIndex = 0;
+
+export function setEditMode(state) {
+  editMode = state;
+}
 
 export function initRadarChart(categories) {
   const ctx = document.getElementById('radarChart').getContext('2d');
@@ -46,12 +52,14 @@ export function initRadarChart(categories) {
   });
 }
 
-
 export function registerSkill(id, category) {
   skillStates[id] = { level: 0, category };
 }
 
 export function cycleSkillLevel(skillEl) {
+    console.log(editMode)
+    if (!editMode) return;
+   
   const id = skillEl.id;
   const currentClass = [...skillEl.classList].find(cls => cls.startsWith('level-'));
   let level = 0;
@@ -128,8 +136,8 @@ export function overlayRadarDataset(data, label = `Imported ${overlayIndex + 1}`
   radarChart.data.datasets.push({
     label,
     data: scores,
-    backgroundColor: overlayColors[overlayIndex % overlayColors.length].replace('0.9', '0.15'),
-    borderColor: overlayColors[overlayIndex % overlayColors.length],
+    backgroundColor: overlayColors[(overlayIndex+1) % overlayColors.length].replace('0.9', '0.15'),
+    borderColor: overlayColors[(overlayIndex+1) % overlayColors.length],
     borderWidth: 2,
     pointRadius: 3
   });

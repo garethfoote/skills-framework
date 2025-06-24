@@ -46,8 +46,8 @@
     h1 {
       font-weight: 300;
       font-family: "Cormorant Garamond", serif;
-      /* font-style: italic; */
-      font-size: 4rem;
+      font-size: 3.2rem;
+      line-height: 2.8rem;
       margin: 1rem 0 1rem 1rem;
     }
 
@@ -59,6 +59,13 @@
       text-align: center;
       user-select: none;
     }    
+
+    @media screen and (min-width: 768px) {
+      h1 {
+        font-size: 4rem;
+        line-height: 3.5rem;
+      }
+    }
 
     .layout {
       display: flex;
@@ -287,7 +294,8 @@
 
       <div id="skills-container"></div>
       <div class="buttons">
-        <button class="button" id="export-button">Export chart</button>
+        <button class="button" id="export-button">💾 Save</button>
+        <button class="button" id="export-image">📊 Download image</button>
         <!-- <button id="import-button">Import Chart</button> -->
       </div>
       <!-- <textarea class="hidden" id="export-output" readonly rows="10" style="width: 100%; margin-top: 1rem;"></textarea> -->
@@ -308,11 +316,18 @@
   <div id="drop-overlay">
     Drop your JSON file to import
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module">
     import { fetchData, groupSkills } from './skills.js';
     import { renderSkills } from './skills.js';
-    import { initRadarChart, exportSkillData, setSkillLevelsFromData, overlayRadarDataset, getCurrentSkillDataByCategory, overlayColors} from './radarChart.js';
+    import { initRadarChart, 
+      exportSkillData, 
+      setSkillLevelsFromData, 
+      overlayRadarDataset, 
+      getCurrentSkillDataByCategory, 
+      overlayColors,
+      setEditMode } from './radarChart.js';
 
     const url = 'https://script.google.com/macros/s/AKfycbwGH0pgjeLSBaFCOoL6wZiCH4Btwvm2zi7H3KcmZfwacQ0GiM0_iUOX2s3-dETDY9U7/exec';
 
@@ -322,7 +337,8 @@
     const grouped = groupSkills(rawData);
     const categories = Object.keys(grouped);
     
-    const meColor = 'rgba(100, 150, 250, 0.9)'; // or any color distinct from overlayColors
+    // const meColor = 'rgba(100, 150, 250, 0.9)'; // or any color distinct from overlayColors
+   
 
     initRadarChart(categories);
     renderSkills(grouped);
@@ -342,64 +358,33 @@
       dlAnchorElem.click();
     });
 
+    document.getElementById('export-image').addEventListener('click', () => {
+      const target = document.querySelector('body'); // or whichever container holds the skills + chart
+      const buttons = document.querySelectorAll('.button');
+      buttons.forEach(btn =>{ btn.style.opacity = '0' })
+      html2canvas(target, {
+        backgroundColor: null, // keeps transparency
+        scale: 2, // higher res export
+      }).then(canvas => {
+          const timestamp = getSimpleTimestamp();
+          const link = document.createElement('a');
+          link.download = `skills-snapshot-${timestamp}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          buttons.forEach(btn =>{ btn.style.opacity = '1' })
+        });
+    });
+
     // ============ IMPORT LOGIC ============
+    let meData = null;
     let importCount = 1;
     const importedDatasets = []; // stores each import's skill data
     const tabContainer = document.getElementById('import-tabs');
     let meBtn;
+    let overlayIndex = 1; // reserve overlayColors[0] for "Me"
 
-    document.getElementById('import-submit').addEventListener('click', () => {
-      const jsonText = document.getElementById('import-input').value.trim();
-      if (!jsonText) return;
-
-      try {
-        const parsed = JSON.parse(jsonText);
-
-        // Save data
-        importedDatasets.push({ data: parsed, color: overlayColors[(importCount - 1) % overlayColors.length] });
-
-
-        // After (use same color as radar overlay)
-        const color = overlayColors[(importCount - 1) % overlayColors.length];
-        setSkillLevelsFromData(parsed, color);
-
-        // Add to radar chart
-        overlayRadarDataset(parsed, `Import ${importCount}`);
-
-        if(!meBtn) {
-          meBtn = document.createElement('button');
-          meBtn.textContent = 'Me';
-          meBtn.classList.add('active'); // Default view
-
-          meBtn.addEventListener('click', () => {
-            const latestMeData = getCurrentSkillDataByCategory();
-            setSkillLevelsFromData(latestMeData, meColor);
-            highlightActiveTab(meBtn);
-          });
-          tabContainer.appendChild(meBtn);
-        }
-
-        // Add tab button
-        const tabBtn = document.createElement('button');
-        tabBtn.textContent = `${importCount}`;
-        tabBtn.dataset.index = importCount - 1;
-        tabBtn.addEventListener('click', () => {
-          const { data, color } = importedDatasets[tabBtn.dataset.index];
-          setSkillLevelsFromData(data, color);
-          highlightActiveTab(tabBtn);
-        });
-        tabContainer.appendChild(tabBtn);
-
-        highlightActiveTab(tabBtn);
-
-        importCount++;
-        document.getElementById('import-area').style.display = 'none';
-
-      } catch (err) {
-        alert('Invalid JSON input: ' + err.message);
-      }
-    });
-
+    // Use the first color for "Me"
+    const meColor = overlayColors[0];
     const dropOverlay = document.getElementById('drop-overlay');
 
     window.addEventListener('dragover', (e) => {
@@ -427,12 +412,31 @@
       try {
         const text = await file.text();
         const parsed = JSON.parse(text);
+        // Save "Me" data before first import
+        if (!meBtn) {
+          meData = getCurrentSkillDataByCategory();
+
+          meBtn = document.createElement('button');
+          meBtn.textContent = 'Me';
+          meBtn.classList.add('active'); // or leave class off and rely on highlightActiveTab()
+
+          meBtn.addEventListener('click', () => {
+            setEditMode(true);
+            setSkillLevelsFromData(meData, meColor);
+            highlightActiveTab(meBtn);
+          });
+
+          tabContainer.appendChild(meBtn);
+        }
 
         // same logic as import-submit click handler
-        const color = overlayColors[(importCount - 1) % overlayColors.length];
+        // const color = overlayColors[(importCount - 1) % overlayColors.length];
+        const color = overlayColors[overlayIndex % overlayColors.length];
+        overlayIndex++;
         importedDatasets.push({ data: parsed, color });
         setSkillLevelsFromData(parsed, color);
-        overlayRadarDataset(parsed, `Import ${importCount}`);
+        overlayRadarDataset(parsed, `Import ${overlayIndex}`);
+        setEditMode(false);
 
         // Create tab if not already
         const tabBtn = document.createElement('button');
