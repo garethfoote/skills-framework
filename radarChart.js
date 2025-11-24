@@ -39,7 +39,7 @@ export function initRadarChart(categories) {
       scales: {
         r: {
           suggestedMin: 0,
-          suggestedMax: 2,
+          suggestedMax: 5,
           ticks: {
             stepSize: 1
           }
@@ -69,7 +69,7 @@ export function cycleSkillLevel(skillEl) {
     skillEl.classList.remove(currentClass);
   }
 
-  const nextLevel = (level + 1) % 4;
+  const nextLevel = (level + 1) % 6;
   skillEl.classList.add(`level-${nextLevel}`);
 
   if (skillStates[id]) {
@@ -113,7 +113,7 @@ export function setSkillLevelsFromData(data, color = '#999') {
     for (const [skillId, level] of Object.entries(skills)) {
       const el = document.getElementById(skillId);
       if (el) {
-        el.classList.remove('level-0', 'level-1', 'level-2', 'level-3');
+        el.classList.remove('level-0', 'level-1', 'level-2', 'level-3', 'level-4', 'level-5');
         el.classList.add(`level-${level}`);
         el.style.setProperty('--circle-color', color);
         if (skillStates[skillId]) {

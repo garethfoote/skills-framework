@@ -49,13 +49,12 @@ export function renderSkills(skillData, containerId = 'skills-container') {
       skillEl.className = 'skill level-0';
       skillEl.addEventListener('click', () => cycleSkillLevel(skillEl));
 
-      const ring2 = document.createElement('div');
-      ring2.className = 'inner-ring ring-2';
-      skillEl.appendChild(ring2);
-
-      const ring1 = document.createElement('div');
-      ring1.className = 'inner-ring ring-1';
-      skillEl.appendChild(ring1);
+      // Add 4 rings for 5 levels (outer ring is .skill itself)
+      for (let i = 4; i >= 1; i--) {
+        const ring = document.createElement('div');
+        ring.className = `inner-ring ring-${i}`;
+        skillEl.appendChild(ring);
+      }
 
       const label = document.createElement('div');
       label.className = 'skill-label';

@@ -196,18 +196,29 @@
       border: 1px solid var(--border-color);
     }
   
-    /* First ring: smaller center circle */
+    /* Four concentric rings for 5 levels (outer ring is .skill itself) */
     .ring-1 {
-      width: 30%;
-      height: 30%;
+      width: 20%;
+      height: 20%;
       background-color: transparent;
       border-style: dashed;
     }
-
-    /* Second ring: medium inner circle */
     .ring-2 {
-      width: 70%;
-      height: 70%;
+      width: 40%;
+      height: 40%;
+      background-color: transparent;
+      border-style: dashed;
+    }
+    .ring-3 {
+      width: 60%;
+      height: 60%;
+      background-color: transparent;
+      /* border-color:  var(--border-color); */
+      border-style: dashed;
+    }
+    .ring-4 {
+      width: 80%;
+      height: 80%;
       background-color: transparent;
       border-style: dashed;
     }
@@ -215,22 +226,40 @@
     /* Level 1: fill ring-1 */
     .level-1 .ring-1,
     .level-2 .ring-1,
-    .level-3 .ring-1 {
+    .level-3 .ring-1,
+    .level-4 .ring-1,
+    .level-5 .ring-1 {
       background-color: var(--circle-color);
       border-color: white;
     }
-
+    /* Level 2: fill ring-2 */
     .level-2 .ring-2,
-    .level-3 .ring-2 {
+    .level-3 .ring-2,
+    .level-4 .ring-2,
+    .level-5 .ring-2 {
+      background-color: var(--circle-color);
+      border-color: white;
+    }
+    /* Level 3: fill ring-3 */
+    .level-3 .ring-3,
+    .level-4 .ring-3,
+    .level-5 .ring-3 {
       background-color: var(--circle-color);
       border-color: white;
     }
 
-    .level-2 .ring-2 {
-      border-style: dashed;
+    .level-3 .ring-3 {
+      border-color:  var(--circle-color);
     }
 
-    .level-3.skill {
+    /* Level 4: fill ring-4 */
+    .level-4 .ring-4,
+    .level-5 .ring-4 {
+      background-color: var(--circle-color);
+      border-color: white;
+    }
+    /* Level 5: fill outer ring */
+    .level-5.skill {
       background-color: var(--circle-color);
       border-color: white;
       border-style:solid;
