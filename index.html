@@ -147,10 +147,10 @@
     #skills-container {
       display: grid;
       grid-template-columns: repeat(6, 1fr); /* 6 equal columns */
-      gap: 2rem;
+      gap: 1.5rem;
       /* width: 100%; */
       box-sizing: border-box;
-      padding: 1rem;
+      padding: 0 0 0 1rem;
     }
 
     .category-column {
@@ -158,6 +158,7 @@
       flex-direction: column;
       align-items: center;
       max-width: 120px;
+      margin: 0 auto;
     }
 
     .skill-wrapper {
@@ -187,6 +188,25 @@
       text-align: center;
       font-size: 0.7rem;
       /* transform: translateX(25px); */
+    }
+
+
+    @media screen and (min-width: 1440px) {
+      .skill {
+        width: 80px;
+        height: 80px;
+      }
+      .skill-label {
+        font-size: 0.9rem;
+      }
+      .category-column {
+        max-width: 160px;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }    
     }
 
     .inner-ring {
@@ -319,12 +339,22 @@
       cursor:pointer;
     }
 
+    p {
+      font-size: 1rem;
+      margin: 0 1rem 1rem 1rem;
+    }
+
+    @media screen and (min-width: 768px) {
+ 
+    }
+
   </style>
 </head>
 <body>
   <div class="layout">
     <div class="left-column">
       <h1>UX Skills Framework</h1>
+      <p>There are 5 rings for each skill representing confidence or experience. 0 means I haven't done it. 1 is low. 5 is high.</p>
       <div id="import-tabs" class="tab-buttons"></div>
 
       <div id="skills-container"></div>
