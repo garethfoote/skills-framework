@@ -406,18 +406,34 @@
     initRadarChart(categories);
     renderSkills(grouped);
 
+    // Export: CSV by default (keeps JSON export available if needed)
+    function exportToCSV(dataObj) {
+      // Expecting structure: { category: { skillId: level, ... }, ... }
+      const rows = [];
+      rows.push(['category', 'skillId', 'level'].join(','));
+      for (const [category, skills] of Object.entries(dataObj)) {
+        for (const [skillId, level] of Object.entries(skills)) {
+          // simple CSV escaping for commas/quotes
+          const safeCategory = String(category).includes(',') || String(category).includes('"')
+            ? '"' + String(category).replace(/"/g, '""') + '"'
+            : String(category);
+          const safeSkillId = String(skillId).includes(',') || String(skillId).includes('"')
+            ? '"' + String(skillId).replace(/"/g, '""') + '"'
+            : String(skillId);
+          rows.push([safeCategory, safeSkillId, String(level)].join(','));
+        }
+      }
+      return rows.join('\n');
+    }
+
     document.getElementById('export-button').addEventListener('click', () => {
       const data = exportSkillData();
-      let outputString = JSON.stringify(data, null, "\t")
-        .replaceAll(
-          "],\n\t\"", 
-          "],\n\n\t\""
-        );
+      const csv = exportToCSV(data);
       const timestamp = getSimpleTimestamp();
-      let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(outputString);
+      let dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
       let dlAnchorElem = document.getElementById('downloadAnchorElem');
-      dlAnchorElem.setAttribute("href", dataStr);
-      dlAnchorElem.setAttribute("download", timestamp + ".json");
+      dlAnchorElem.setAttribute('href', dataStr);
+      dlAnchorElem.setAttribute('download', timestamp + '.csv');
       dlAnchorElem.click();
     });
 
@@ -479,14 +495,85 @@
       dropOverlay.style.display = 'none';
 
       const file = e.dataTransfer.files[0];
-      if (!file || !file.name.endsWith('.json')) {
-        alert('Please drop a JSON file');
+      if (!file) {
+        alert('No file detected');
+        return;
+      }
+
+      // accept CSV or JSON
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+      const isJSON = file.name.toLowerCase().endsWith('.json');
+      if (!isCSV && !isJSON) {
+        alert('Please drop a CSV or JSON file');
         return;
       }
 
       try {
         const text = await file.text();
-        const parsed = JSON.parse(text);
+        let parsed;
+        if (isJSON) {
+          parsed = JSON.parse(text);
+        } else {
+          // simple CSV -> { category: { skillId: level } }
+          const csvToObj = (csvText) => {
+            // parse CSV into array of objects using header
+            const parseCSV = (str) => {
+              const rows = [];
+              let cur = '';
+              let row = [];
+              let inQuotes = false;
+              for (let i = 0; i < str.length; i++) {
+                const ch = str[i];
+                if (ch === '"') {
+                  if (inQuotes && str[i+1] === '"') { cur += '"'; i++; } else { inQuotes = !inQuotes; }
+                } else if (ch === ',' && !inQuotes) {
+                  row.push(cur); cur = '';
+                } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+                  // handle CRLF and LF
+                  if (ch === '\r' && str[i+1] === '\n') { /* skip, will be handled once */ }
+                  if (cur !== '' || row.length) { row.push(cur); rows.push(row); row = []; cur = ''; }
+                } else {
+                  cur += ch;
+                }
+              }
+              if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+              return rows.map(r => r.map(cell => cell.trim()));
+            };
+
+            const lines = parseCSV(csvText).filter(r => r.length && !(r.length === 1 && r[0] === ''));
+            if (!lines.length) return {};
+            const header = lines[0].map(h => h.replace(/^"|"$/g, '').trim());
+            const out = [];
+            for (let i = 1; i < lines.length; i++) {
+              const row = lines[i];
+              if (row.length === 0) continue;
+              const obj = {};
+              for (let j = 0; j < header.length; j++) {
+                const key = header[j] || `col${j}`;
+                const raw = row[j] || '';
+                // unquote if needed
+                obj[key] = raw.replace(/^"|"$/g, '');
+              }
+              out.push(obj);
+            }
+            return out;
+          };
+
+          const rows = csvToObj(text);
+          // expect header with category,skillId,level
+          const result = {};
+          rows.forEach(r => {
+            const cat = r.category || r.Category || r.CATEGORY;
+            const sid = r.skillId || r.skillID || r.skillid || r.skill || r.skill_id;
+            const lvl = r.level || r.Level || r.LEVEL || r.score || r.value;
+            if (!cat || !sid) return;
+            const num = Number(lvl);
+            const level = Number.isFinite(num) ? Math.max(0, Math.min(5, Math.round(num))) : 0;
+            if (!result[cat]) result[cat] = {};
+            result[cat][sid] = level;
+          });
+          parsed = result;
+        }
         // Save "Me" data before first import
         if (!meBtn) {
           meData = getCurrentSkillDataByCategory();
@@ -505,7 +592,6 @@
         }
 
         // same logic as import-submit click handler
-        // const color = overlayColors[(importCount - 1) % overlayColors.length];
         const color = overlayColors[overlayIndex % overlayColors.length];
         overlayIndex++;
         importedDatasets.push({ data: parsed, color });
