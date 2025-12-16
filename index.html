@@ -446,21 +446,69 @@
       }
     });
 
-    document.getElementById('export-image').addEventListener('click', () => {
-      const target = document.querySelector('body'); // or whichever container holds the skills + chart
+    document.getElementById('export-image').addEventListener('click', async () => {
       const buttons = document.querySelectorAll('.button');
-      buttons.forEach(btn =>{ btn.style.opacity = '0' })
-      html2canvas(target, {
-        backgroundColor: null, // keeps transparency
-        scale: 2, // higher res export
-      }).then(canvas => {
-          const timestamp = getSimpleTimestamp();
-          const link = document.createElement('a');
-          link.download = `skills-snapshot-${timestamp}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-          buttons.forEach(btn =>{ btn.style.opacity = '1' })
+      buttons.forEach(btn => { btn.style.opacity = '0'; });
+
+      // Elements that constrain the visible area (scrolling)
+      const layout = document.querySelector('.layout');
+      const leftCol = document.querySelector('.left-column');
+      const rightCol = document.querySelector('.right-column');
+      const htmlEl = document.documentElement;
+      const bodyEl = document.body;
+
+      // Save original inline styles so we can restore them
+      const originals = new Map();
+      const saveStyle = (el, prop) => {
+        const key = el.tagName + (el.id ? `#${el.id}` : '') + (el.className ? `.${el.className}` : '');
+        originals.set(el, el.getAttribute('style') || '');
+      };
+
+      [layout, leftCol, rightCol, htmlEl, bodyEl].forEach(el => { if (el) saveStyle(el); });
+
+      // Expand everything so hidden scroll content becomes visible for capture
+      if (layout) { layout.style.height = 'auto'; layout.style.overflow = 'visible'; }
+      if (leftCol) { leftCol.style.height = 'auto'; leftCol.style.overflow = 'visible'; }
+      if (rightCol) { rightCol.style.height = 'auto'; rightCol.style.overflow = 'visible'; }
+      htmlEl.style.height = 'auto'; htmlEl.style.overflow = 'visible';
+      bodyEl.style.height = 'auto'; bodyEl.style.overflow = 'visible';
+
+      // Let layout reflow
+      await new Promise(r => setTimeout(r, 80));
+
+      // Compute full page size
+      const fullWidth = Math.max(htmlEl.scrollWidth, bodyEl.scrollWidth, window.innerWidth);
+      const fullHeight = Math.max(htmlEl.scrollHeight, bodyEl.scrollHeight, window.innerHeight);
+
+      try {
+        const canvas = await html2canvas(document.body, {
+          backgroundColor: null,
+          scale: 2,
+          windowWidth: fullWidth,
+          windowHeight: fullHeight,
+          width: fullWidth,
+          height: fullHeight
         });
+
+        const timestamp = getSimpleTimestamp();
+        const link = document.createElement('a');
+        link.download = `skills-snapshot-${timestamp}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        alert('Failed to capture image: ' + err.message);
+      } finally {
+        // restore original inline styles
+        [layout, leftCol, rightCol, htmlEl, bodyEl].forEach(el => {
+          if (!el) return;
+          const orig = originals.get(el);
+          if (orig === undefined || orig === null) el.removeAttribute('style');
+          else if (orig === '') el.removeAttribute('style');
+          else el.setAttribute('style', orig);
+        });
+
+        buttons.forEach(btn => { btn.style.opacity = '1'; });
+      }
     });
 
     // ============ IMPORT LOGIC ============
