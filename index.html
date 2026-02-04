@@ -268,9 +268,9 @@
       border-color: white;
     }
 
-    .level-3 .ring-3 {
+    /* .level-3 .ring-3 {
       border-color:  var(--circle-color);
-    }
+    } */
 
     /* Level 4: fill ring-4 */
     .level-4 .ring-4,
@@ -629,6 +629,10 @@
 
           meBtn.addEventListener('click', () => {
             setEditMode(true);
+            // Ensure we have the latest "Me" data before rendering it
+            if (!meData) {
+              meData = getCurrentSkillDataByCategory();
+            }
             setSkillLevelsFromData(meData, meColor);
             highlightActiveTab(meBtn);
           });
@@ -637,6 +641,11 @@
         }
 
         // same logic as import-submit click handler
+        // If "Me" is currently active, persist latest changes before switching
+        if (meBtn && meBtn.classList.contains('active')) {
+          meData = getCurrentSkillDataByCategory();
+        }
+
         const color = overlayColors[overlayIndex % overlayColors.length];
         overlayIndex++;
         importedDatasets.push({ data: parsed, color });
@@ -649,6 +658,10 @@
         tabBtn.textContent = `${importCount}`;
         tabBtn.dataset.index = importCount - 1;
         tabBtn.addEventListener('click', () => {
+          // If leaving "Me", save its latest state
+          if (meBtn && meBtn.classList.contains('active')) {
+            meData = getCurrentSkillDataByCategory();
+          }
           const { data, color } = importedDatasets[tabBtn.dataset.index];
           setSkillLevelsFromData(data, color);
           highlightActiveTab(tabBtn);
